@@ -4,3 +4,17 @@
         coffee --default,
         all;
 }
+
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background-image: url(assets/a_building_with_a_palm_tree_and_a_white_umbrella.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}

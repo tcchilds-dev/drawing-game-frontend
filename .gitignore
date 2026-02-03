@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 todo.txt
+repomix.config.json
+.repomixignore
+repomix-output.xml

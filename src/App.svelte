@@ -1,5 +1,4 @@
 <script lang="ts">
-    import BrushWidth from "./lib/BrushWidth.svelte";
     import Button from "./lib/Button.svelte";
     import Chat from "./lib/Chat.svelte";
     import ColorPicker from "./lib/ColorPicker.svelte";
@@ -7,31 +6,54 @@
     import WordDisplay from "./lib/WordDisplay.svelte";
 
     const word = "apple";
-
     let isArtist = true;
 </script>
 
-<div id="game" class="flex w-full h-full">
-    <div id="game-wrapper" class="grid grid-cols-6 grid-rows-12 h-full w-full">
-        <div id="top-bar" class="col-span-6 row-span-1">
-            <WordDisplay {word} {isArtist} revealedIndices={new Set([0, 2])} />
-        </div>
-        <div id="player-list" class="row-span-10">
-            <PlayerList />
-        </div>
-        <div id="canvas" class="row-span-10 col-span-4">
-            <main class="flex-1 bg-neutral-200 col-span-4">
+<div class="flex flex-col h-full">
+    <!-- Header -->
+    <header class="h-20 flex items-center justify-center">
+        <h1 class="text-4xl font-bold text-white drop-shadow-lg">Tom's Drawing Game</h1>
+    </header>
+
+    <!-- Game area with padding -->
+    <main class="flex-1 px-8 pb-4 min-h-0">
+        <div class="grid grid-cols-6 grid-rows-12 h-full gap-1">
+            <!-- Top bar -->
+            <div class="col-span-6 row-span-1 bg-base-100 rounded-t-lg">
+                <WordDisplay {word} {isArtist} revealedIndices={new Set([0, 2])} />
+            </div>
+
+            <!-- Player list -->
+            <div class="row-span-10 bg-base-200 rounded-bl-lg">
+                <PlayerList />
+            </div>
+
+            <!-- Canvas -->
+            <div class="row-span-10 col-span-4 bg-white">
                 <canvas class="w-full h-full"></canvas>
-            </main>
+            </div>
+
+            <!-- Chat -->
+            <div class="row-span-11 bg-base-200 rounded-r-lg">
+                <Chat />
+            </div>
+
+            <!-- Leave button -->
+            <div class="col-span-1 bg-base-200 rounded-bl-lg flex items-center justify-center">
+                <Button variant="leave">Leave</Button>
+            </div>
+
+            <!-- Color picker -->
+            <div class="col-span-4 bg-base-100 flex items-center justify-center">
+                <ColorPicker />
+            </div>
         </div>
-        <div id="chat" class="row-span-11">
-            <Chat />
-        </div>
-        <div id="leave" class="col-span-1">
-            <Button variant="leave">Leave</Button>
-        </div>
-        <div id="color-picker" class="col-span-4 justify-around align-middle">
-            <ColorPicker />
-        </div>
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="h-20 flex items-center justify-center gap-8 text-white/70">
+        <a href="#" class="hover:text-white">Contact</a>
+        <a href="#" class="hover:text-white">About</a>
+        <a href="#" class="hover:text-white">GitHub</a>
+    </footer>
 </div>

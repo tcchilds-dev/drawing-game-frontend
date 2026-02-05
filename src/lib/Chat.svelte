@@ -1,17 +1,18 @@
 <script lang="ts">
-    interface Message {
-        id: string;
-        author: string;
-        text: string;
-        isOwn: boolean;
+    import type { Guessage } from "./socket";
+
+    interface Props {
+        messages?: Guessage[];
+        onSend?: (text: string) => void;
+        disabled?: boolean;
     }
 
-    let { messages = [] }: { messages: Message[] } = $props();
+    let { messages = [], onSend, disabled = false }: Props = $props();
     let inputValue = $state("");
 
     function sendMessage() {
-        if (!inputValue.trim()) return;
-        console.log("send:", inputValue);
+        if (!inputValue.trim() || disabled) return;
+        onSend?.(inputValue.trim());
         inputValue = "";
     }
 
@@ -24,27 +25,26 @@
 </script>
 
 <div class="flex flex-col h-full">
-    <!-- Messages area -->
     <div class="flex-1 overflow-y-auto p-4 space-y-2">
-        {#each messages as message (message.id)}
-            <div class="chat" class:chat-end={message.isOwn} class:chat-start={!message.isOwn}>
-                <div class="chat-header">{message.author}</div>
-                <div class="chat-bubble" class:chat-bubble-primary={message.isOwn}>
-                    {message.text}
+        {#each messages as message (message.timestamp)}
+            <div class="chat chat-start">
+                <div class="chat-bubble chat-bubble-neutral">
+                    <span class="font-semibold">{message.playerId.slice(0, 6)}:</span>
+                    {message.guessage}
                 </div>
             </div>
         {/each}
     </div>
 
-    <!-- Input area -->
     <div class="p-4">
         <div class="flex gap-2">
             <input
                 type="text"
                 class="input input-bordered flex-1"
-                placeholder="Type a message..."
+                placeholder={disabled ? "You're drawing!" : "Type a guess..."}
                 bind:value={inputValue}
                 onkeydown={handleKeydown}
+                {disabled}
             />
         </div>
     </div>

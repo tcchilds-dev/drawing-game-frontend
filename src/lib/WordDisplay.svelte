@@ -2,6 +2,7 @@
     interface Props {
         word: string;
         isArtist?: boolean;
+        revealWord?: boolean;
         revealedIndices?: Set<number>;
         roundTime?: number;
         currentRound?: number;
@@ -12,6 +13,7 @@
     let {
         word,
         isArtist = false,
+        revealWord = false,
         revealedIndices = new Set(),
         roundTime = 60,
         currentRound = 1,
@@ -47,6 +49,8 @@
                     class="w-4 h-6 flex items-center justify-center font-bold border-b-2 border-base-content"
                 >
                     {#if isArtist || revealedIndices.has(i)}
+                        {char}
+                    {:else if revealWord}
                         {char}
                     {:else}
                         &nbsp;

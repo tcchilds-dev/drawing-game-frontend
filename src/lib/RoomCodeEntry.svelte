@@ -2,7 +2,7 @@
     import Button from "./Button.svelte";
 
     interface Props {
-        onSubmit: (code: string) => Promise<boolean>;
+        onSubmit: (code: string) => Promise<string | null>;
         onBack: () => void;
     }
 
@@ -17,10 +17,9 @@
         isSubmitting = true;
         error = "";
 
-        const success = await onSubmit(code.trim());
-
-        if (!success) {
-            error = "Room not found. Check the code and try again.";
+        const submitError = await onSubmit(code.trim());
+        if (submitError) {
+            error = submitError;
         }
 
         isSubmitting = false;

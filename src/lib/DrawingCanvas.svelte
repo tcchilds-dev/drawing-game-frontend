@@ -109,6 +109,9 @@
             width: brushSize,
         };
 
+        // Render immediately so a single click leaves a visible dot.
+        redraw();
+
         socket.emit("stroke:start", { color, width: brushSize });
         socket.emit("stroke:points", { points: [point] });
     }
@@ -145,6 +148,7 @@
         lastPoint = null;
 
         socket.emit("stroke:end");
+        redraw();
     }
 
     function handlePointerLeave(e: PointerEvent) {
@@ -155,7 +159,7 @@
 
     // Remote event handlers
     function handleRemoteStrokeStart(data: { playerId: string; color: string; width: number }) {
-        if (data.playerId === gameState.socketId) return;
+        if (data.playerId === gameState.playerId) return;
 
         remoteActiveStroke = {
             points: [],
@@ -165,7 +169,7 @@
     }
 
     function handleRemoteStrokePoints(data: { playerId: string; points: Point[] }) {
-        if (data.playerId === gameState.socketId) return;
+        if (data.playerId === gameState.playerId) return;
         if (!remoteActiveStroke) return;
 
         // Draw new segments
@@ -193,6 +197,7 @@
         if (remoteActiveStroke) {
             completedStrokes = [...completedStrokes, remoteActiveStroke];
             remoteActiveStroke = null;
+            redraw();
         }
     }
 
@@ -228,6 +233,16 @@
 
     function drawStroke(stroke: Stroke) {
         if (!ctx || stroke.points.length === 0) return;
+
+        if (stroke.points.length === 1) {
+            const point = toPixels(stroke.points[0]);
+            const radius = Math.max(1, stroke.width / 2);
+            ctx.beginPath();
+            ctx.fillStyle = stroke.color;
+            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            return;
+        }
 
         ctx.beginPath();
         ctx.strokeStyle = stroke.color;

@@ -1,14 +1,21 @@
 <script lang="ts">
-    import type { Guessage } from "./socket";
+    import type { Guessage, User } from "./socket";
 
     interface Props {
         messages?: Guessage[];
+        players?: User[];
         onSend?: (text: string) => void;
         disabled?: boolean;
     }
 
-    let { messages = [], onSend, disabled = false }: Props = $props();
+    let { messages = [], players = [], onSend, disabled = false }: Props = $props();
     let inputValue = $state("");
+
+    const playersById = $derived(new Map(players.map((player) => [player.playerId, player.username])));
+
+    function getDisplayName(playerId: string): string {
+        return playersById.get(playerId) ?? playerId.slice(0, 6);
+    }
 
     function sendMessage() {
         if (!inputValue.trim() || disabled) return;
@@ -29,7 +36,7 @@
         {#each messages as message (message.timestamp)}
             <div class="chat chat-start">
                 <div class="chat-bubble chat-bubble-neutral">
-                    <span class="font-semibold">{message.playerId.slice(0, 6)}:</span>
+                    <span class="font-semibold">{getDisplayName(message.playerId)}:</span>
                     {message.guessage}
                 </div>
             </div>

@@ -28,13 +28,10 @@
         <table class="table table-sm">
             <tbody>
                 {#each sortedPlayers as player (player.id)}
-                    <tr
-                        class:bg-primary={player.id === currentArtistId}
-                        class:bg-opacity-20={player.id === currentArtistId}
-                    >
+                    <tr>
                         <td class="truncate max-w-24">
                             {player.username}
-                            {#if player.id === currentArtistId}
+                            {#if player.playerId === currentArtistId}
                                 🎨
                             {/if}
                         </td>

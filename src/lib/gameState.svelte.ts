@@ -1,6 +1,7 @@
 import {
   socket,
   type ConvertedRoom,
+  type FinalStanding,
   type GamePhase,
   type Guessage,
   type RoomConfig,
@@ -13,6 +14,11 @@ interface StoredSession {
   username: string;
   roomId: string;
 }
+
+export type JoinRoomResult = {
+  success: boolean;
+  error?: string;
+};
 
 function getOrCreatePlayerId(): string {
   let playerId = sessionStorage.getItem(PLAYER_ID_KEY);
@@ -71,14 +77,17 @@ function createGameState() {
   let timerRemaining = $state(0);
   let wordChoices = $state<string[]>([]);
   let currentWord = $state<string | null>(null);
+  let maskedWord = $state<string | null>(null);
+  let finalStandings = $state<FinalStanding[]>([]);
 
   let timerInterval: ReturnType<typeof setInterval> | null = null;
 
   // Derived state
-  const isArtist = $derived(room?.drawingState.currentArtist === socketId);
+  const isArtist = $derived(room?.drawingState.currentArtist === playerId);
   const isCreator = $derived(room?.creator === socketId);
   const players = $derived(room ? Object.values(room.players) : []);
   const messages = $derived(room?.guessages ?? []);
+  const displayWord = $derived(currentWord ?? maskedWord ?? "");
 
   function startLocalTimer(initialMs: number) {
     if (timerInterval) {
@@ -120,7 +129,7 @@ function createGameState() {
 
     // Then try to rejoin room
     const rejoined = await joinRoomInternal(roomId);
-    if (!rejoined) {
+    if (!rejoined.success) {
       console.error("Failed to rejoin room, it may no longer exist");
       clearSession();
       roomId = null;
@@ -159,7 +168,16 @@ function createGameState() {
       console.log("Room update received:", updatedRoom);
       room = updatedRoom;
       phase = updatedRoom.phase;
-      currentRound = updatedRoom.currentRound;
+      currentRound = updatedRoom.phase === "lobby" ? 0 : updatedRoom.currentRound;
+
+      // Clear stale word display when game returns to lobby.
+      if (updatedRoom.phase === "lobby") {
+        stopLocalTimer();
+        timerRemaining = 0;
+        currentWord = null;
+        maskedWord = null;
+        wordChoices = [];
+      }
     });
 
     socket.on("user:left", (userId) => {
@@ -174,6 +192,18 @@ function createGameState() {
       wordChoices = data.words;
     });
 
+    socket.on("word:mask", (data) => {
+      maskedWord = data.maskedWord;
+      if (!isArtist) {
+        currentWord = null;
+      }
+    });
+
+    socket.on("word:selected", (data) => {
+      currentWord = data.word;
+      wordChoices = [];
+    });
+
     socket.on("timer:sync", (data) => {
       timerRemaining = data.remaining;
       phase = data.phase;
@@ -181,18 +211,26 @@ function createGameState() {
     });
 
     socket.on("round:start", (data) => {
+      finalStandings = [];
       currentRound = data.round;
       currentWord = null;
+      maskedWord = null;
     });
 
     socket.on("round:end", (data) => {
       currentWord = data.word;
+      maskedWord = null;
     });
 
-    socket.on("game:end", () => {
+    socket.on("game:end", (data) => {
+      stopLocalTimer();
+      timerRemaining = 0;
       phase = "lobby";
       currentRound = 0;
       currentWord = null;
+      maskedWord = null;
+      wordChoices = [];
+      finalStandings = [...data.finalStandings];
     });
 
     socket.on("guess:correct", (data) => {
@@ -214,6 +252,10 @@ function createGameState() {
     room = null;
     roomId = null;
     phase = "lobby";
+    finalStandings = [];
+    currentWord = null;
+    maskedWord = null;
+    wordChoices = [];
   }
 
   async function setUsernameInternal(name: string): Promise<boolean> {
@@ -254,11 +296,11 @@ function createGameState() {
     return setUsernameInternal(name);
   }
 
-  async function joinRoomInternal(id: string): Promise<boolean> {
+  async function joinRoomInternal(id: string): Promise<JoinRoomResult> {
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
         console.error("Join room request timed out");
-        resolve(false);
+        resolve({ success: false, error: "join request timed out" });
       }, 5000);
 
       socket.emit("room:join", id, (res) => {
@@ -267,10 +309,10 @@ function createGameState() {
           room = res.room;
           roomId = res.room.id;
           phase = res.room.phase;
-          resolve(true);
+          resolve({ success: true });
         } else {
           console.error("Failed to join room:", res.error);
-          resolve(false);
+          resolve({ success: false, error: res.error });
         }
       });
     });
@@ -301,12 +343,12 @@ function createGameState() {
     });
   }
 
-  async function joinRoom(id: string): Promise<boolean> {
-    const success = await joinRoomInternal(id);
-    if (success && username && roomId) {
+  async function joinRoom(id: string): Promise<JoinRoomResult> {
+    const result = await joinRoomInternal(id);
+    if (result.success && username && roomId) {
       saveSession(username, roomId);
     }
-    return success;
+    return result;
   }
 
   function leaveRoom() {
@@ -314,6 +356,9 @@ function createGameState() {
     room = null;
     roomId = null;
     phase = "lobby";
+    finalStandings = [];
+    currentWord = null;
+    maskedWord = null;
     wordChoices = [];
     stopLocalTimer();
     clearSession();
@@ -330,6 +375,9 @@ function createGameState() {
       socket.emit("game:start", roomId!, (res) => {
         clearTimeout(timeout);
         resolve(res.success);
+        if (res.success) {
+          finalStandings = [];
+        }
         if (!res.success) {
           console.error("Failed to start game:", res.error);
         }
@@ -338,9 +386,9 @@ function createGameState() {
   }
 
   function sendGuess(text: string) {
-    if (!socketId) return;
+    if (!playerId) return;
     const guessage: Guessage = {
-      playerId: socketId,
+      playerId: playerId,
       guessage: text,
       timestamp: new Date().toISOString(),
     };
@@ -398,6 +446,12 @@ function createGameState() {
     },
     get currentWord() {
       return currentWord;
+    },
+    get displayWord() {
+      return displayWord;
+    },
+    get finalStandings() {
+      return finalStandings;
     },
     get isArtist() {
       return isArtist;

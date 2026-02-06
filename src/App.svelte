@@ -65,12 +65,19 @@
         screen = "join";
     }
 
-    async function handleJoinRoom(code: string): Promise<boolean> {
-        const success = await gameState.joinRoom(code);
-        if (success) {
+    async function handleJoinRoom(code: string): Promise<string | null> {
+        const result = await gameState.joinRoom(code);
+        if (result.success) {
             screen = "game";
+            return null;
         }
-        return success;
+        if (result.error === "room is full") {
+            return "Room is full.";
+        }
+        if (result.error) {
+            return result.error;
+        }
+        return "Room not found. Check the code and try again.";
     }
 
     function handleLeave() {
@@ -112,8 +119,9 @@
             <div class="col-span-6 row-span-1 bg-base-100 rounded-t-lg">
                 {#if screen === "game" && gameState.room}
                     <WordDisplay
-                        word={gameState.currentWord ?? ""}
+                        word={gameState.displayWord}
                         isArtist={gameState.isArtist}
+                        revealWord={gameState.phase === "round-end"}
                         revealedIndices={new Set()}
                         roundTime={timerSeconds}
                         currentRound={gameState.currentRound}
@@ -155,6 +163,28 @@
                     <RoomCodeEntry onSubmit={handleJoinRoom} onBack={() => (screen = "lobby")} />
                 {:else if gameState.phase === "word-selection" && gameState.isArtist}
                     <WordSelection words={gameState.wordChoices} onSelect={handleWordChoice} />
+                {:else if gameState.finalStandings.length > 0}
+                    <div class="flex h-full items-center justify-center bg-base-100 p-6">
+                        <div class="w-full max-w-lg rounded-lg border border-base-300 bg-base-200 p-6">
+                            <h2 class="mb-4 text-center text-2xl font-bold">Game Over</h2>
+                            <p class="mb-4 text-center text-sm opacity-70">Final Scores</p>
+                            <div class="space-y-2">
+                                {#each gameState.finalStandings as standing, index}
+                                    <div class="flex items-center justify-between rounded bg-base-100 px-3 py-2">
+                                        <span class="font-semibold">#{index + 1} {standing.username}</span>
+                                        <span class="font-mono">{standing.score}</span>
+                                    </div>
+                                {/each}
+                            </div>
+                            <div class="mt-6 flex justify-center">
+                                {#if gameState.isCreator}
+                                    <Button variant="start" onclick={handleStartGame}>Start Next Game</Button>
+                                {:else}
+                                    <span class="text-sm opacity-70">Waiting for host to start next game...</span>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
                 {:else}
                     <DrawingCanvas
                         bind:this={canvasRef}
@@ -170,6 +200,7 @@
                 {#if screen === "game"}
                     <Chat
                         messages={gameState.messages}
+                        players={gameState.players}
                         onSend={handleSendMessage}
                         disabled={gameState.isArtist && gameState.phase === "drawing"}
                     />

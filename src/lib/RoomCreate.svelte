@@ -12,7 +12,7 @@
     let isPrivate = $state(false);
     let maxPlayers = $state(6);
     let wordSelectionSize = $state<3 | 5>(3);
-    let drawTimer = $state(60);
+    let drawTimer = $state(80);
     let numberOfRounds = $state(3);
 
     let isSubmitting = $state(false);

@@ -46,15 +46,16 @@
     <h2 class="text-2xl font-bold">Create a Room</h2>
 
     <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-80 border p-4">
-        <label class="label">
+        <label class="label" for="private-room">
             <span class="label-text">Private Room</span>
         </label>
-        <input type="checkbox" class="toggle toggle-primary" bind:checked={isPrivate} />
+        <input id="private-room" type="checkbox" class="toggle toggle-primary" bind:checked={isPrivate} />
 
-        <label class="label mt-2">
+        <label class="label mt-2" for="max-players">
             <span class="label-text">Max Players: {maxPlayers}</span>
         </label>
         <input
+            id="max-players"
             type="range"
             min="2"
             max="12"
@@ -67,18 +68,19 @@
             <span>12</span>
         </div>
 
-        <label class="label mt-2">
+        <label class="label mt-2" for="word-selection-size">
             <span class="label-text">Word Choices</span>
         </label>
-        <select class="select select-bordered select-sm w-full" bind:value={wordSelectionSize}>
+        <select id="word-selection-size" class="select select-bordered select-sm w-full" bind:value={wordSelectionSize}>
             <option value={3}>3 words</option>
             <option value={5}>5 words</option>
         </select>
 
-        <label class="label mt-2">
+        <label class="label mt-2" for="draw-timer">
             <span class="label-text">Drawing Time: {drawTimer}s</span>
         </label>
         <input
+            id="draw-timer"
             type="range"
             min="30"
             max="180"
@@ -91,10 +93,11 @@
             <span>180s</span>
         </div>
 
-        <label class="label mt-2">
+        <label class="label mt-2" for="number-of-rounds">
             <span class="label-text">Rounds: {numberOfRounds}</span>
         </label>
         <input
+            id="number-of-rounds"
             type="range"
             min="1"
             max="10"

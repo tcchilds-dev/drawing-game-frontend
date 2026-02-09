@@ -66,7 +66,6 @@ export type WordResponse = { success: true; word: string } | { success: false; e
 // Server -> Client events
 interface ServerToClientEvents {
   "room:update": (room: ConvertedRoom) => void;
-  "user:joined": (userId: string) => void;
   "user:left": (userId: string) => void;
   "word:choice": (data: { words: string[] }) => void;
   "word:mask": (data: { maskedWord: string }) => void;

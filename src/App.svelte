@@ -229,8 +229,8 @@
     </main>
 
     <footer class="h-20 flex items-center justify-center gap-8 text-white/70">
-        <a href="#" class="hover:text-white">Contact</a>
-        <a href="#" class="hover:text-white">About</a>
-        <a href="#" class="hover:text-white">GitHub</a>
+        <a href="/contact" class="hover:text-white">Contact</a>
+        <a href="/about" class="hover:text-white">About</a>
+        <a href="https://github.com" class="hover:text-white" target="_blank" rel="noreferrer">GitHub</a>
     </footer>
 </div>

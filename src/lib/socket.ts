@@ -105,6 +105,10 @@ export type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
 
+if (import.meta.env.PROD) {
+  console.log("Socket server URL:", SOCKET_URL);
+}
+
 export const socket: TypedSocket = io(SOCKET_URL, {
   autoConnect: false,
 });

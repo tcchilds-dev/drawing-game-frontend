@@ -54,6 +54,19 @@ export function hasStoredSession(): boolean {
 
 export const gameState = createGameState();
 
+function getRevealedIndicesFromMask(maskedWord: string): Set<number> {
+  const indices = new Set<number>();
+
+  for (let i = 0; i < maskedWord.length; i++) {
+    const char = maskedWord[i];
+    if (char !== "_" && char !== " ") {
+      indices.add(i);
+    }
+  }
+
+  return indices;
+}
+
 function createGameState() {
   // Load stored session
   const storedSession = loadSession();
@@ -78,6 +91,7 @@ function createGameState() {
   let wordChoices = $state<string[]>([]);
   let currentWord = $state<string | null>(null);
   let maskedWord = $state<string | null>(null);
+  let revealedIndices = $state<Set<number>>(new Set<number>());
   let finalStandings = $state<FinalStanding[]>([]);
 
   let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -176,6 +190,7 @@ function createGameState() {
         timerRemaining = 0;
         currentWord = null;
         maskedWord = null;
+        revealedIndices = new Set<number>();
         wordChoices = [];
       }
     });
@@ -194,6 +209,7 @@ function createGameState() {
 
     socket.on("word:mask", (data) => {
       maskedWord = data.maskedWord;
+      revealedIndices = getRevealedIndicesFromMask(data.maskedWord);
       if (!isArtist) {
         currentWord = null;
       }
@@ -201,6 +217,7 @@ function createGameState() {
 
     socket.on("word:selected", (data) => {
       currentWord = data.word;
+      revealedIndices = new Set<number>();
       wordChoices = [];
     });
 
@@ -215,11 +232,13 @@ function createGameState() {
       currentRound = data.round;
       currentWord = null;
       maskedWord = null;
+      revealedIndices = new Set<number>();
     });
 
     socket.on("round:end", (data) => {
       currentWord = data.word;
       maskedWord = null;
+      revealedIndices = new Set<number>();
     });
 
     socket.on("game:end", (data) => {
@@ -229,6 +248,7 @@ function createGameState() {
       currentRound = 0;
       currentWord = null;
       maskedWord = null;
+      revealedIndices = new Set<number>();
       wordChoices = [];
       finalStandings = [...data.finalStandings];
     });
@@ -255,6 +275,7 @@ function createGameState() {
     finalStandings = [];
     currentWord = null;
     maskedWord = null;
+    revealedIndices = new Set<number>();
     wordChoices = [];
   }
 
@@ -359,6 +380,7 @@ function createGameState() {
     finalStandings = [];
     currentWord = null;
     maskedWord = null;
+    revealedIndices = new Set<number>();
     wordChoices = [];
     stopLocalTimer();
     clearSession();
@@ -406,6 +428,7 @@ function createGameState() {
         clearTimeout(timeout);
         if (res.success) {
           currentWord = res.word;
+          revealedIndices = new Set<number>();
           wordChoices = [];
           resolve(true);
         } else {
@@ -449,6 +472,9 @@ function createGameState() {
     },
     get displayWord() {
       return displayWord;
+    },
+    get revealedIndices() {
+      return revealedIndices;
     },
     get finalStandings() {
       return finalStandings;

@@ -125,7 +125,7 @@
             word={gameState.displayWord}
             isArtist={gameState.isArtist}
             revealWord={gameState.phase === "round-end"}
-            revealedIndices={new Set()}
+            revealedIndices={gameState.revealedIndices}
             roundTime={timerSeconds}
             currentRound={gameState.currentRound}
             totalRounds={gameState.room.config.numberOfRounds}

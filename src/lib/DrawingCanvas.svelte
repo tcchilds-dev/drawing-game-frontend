@@ -15,12 +15,18 @@
     let ctx: CanvasRenderingContext2D | null = null;
     let isDrawing = $state(false);
     let redrawFrame: number | null = null;
+    let networkFlushFrame: number | null = null;
+
+    const MAX_POINTS_PER_EMIT = 150;
+    const MAX_POINT_GAP_PX = 8;
 
     // Local stroke state for rendering
     let completedStrokes: Stroke[] = $state([]);
     let activeStroke: Stroke | null = $state(null);
     // Remote active stroke (from artist when we're spectating)
     let remoteActiveStroke: Stroke | null = $state(null);
+    let pendingNetworkPoints: Point[] = [];
+    let lastStrokePoint: Point | null = null;
 
     // Cursor SVG for artist
     const cursorSvg = $derived(() => {
@@ -57,6 +63,9 @@
             if (redrawFrame !== null) {
                 cancelAnimationFrame(redrawFrame);
             }
+            if (networkFlushFrame !== null) {
+                cancelAnimationFrame(networkFlushFrame);
+            }
             window.removeEventListener("resize", resizeCanvas);
             socket.off("stroke:start", handleRemoteStrokeStart);
             socket.off("stroke:points", handleRemoteStrokePoints);
@@ -80,8 +89,7 @@
     }
 
     // Convert pixel coordinates to normalized [0, 1]
-    function toNormalized(x: number, y: number): Point {
-        const rect = canvas.getBoundingClientRect();
+    function toNormalizedWithRect(x: number, y: number, rect: DOMRect): Point {
         return [x / rect.width, y / rect.height];
     }
 
@@ -103,6 +111,64 @@
         });
     }
 
+    function queueNetworkFlush() {
+        if (networkFlushFrame !== null) return;
+
+        networkFlushFrame = requestAnimationFrame(() => {
+            networkFlushFrame = null;
+            flushPendingNetworkPoints();
+        });
+    }
+
+    function flushPendingNetworkPoints() {
+        if (pendingNetworkPoints.length === 0) return;
+
+        while (pendingNetworkPoints.length > 0) {
+            const points = pendingNetworkPoints.splice(0, MAX_POINTS_PER_EMIT);
+            socket.emit("stroke:points", { points });
+        }
+    }
+
+    function getPointerSamples(event: PointerEvent): PointerEvent[] {
+        if (typeof event.getCoalescedEvents !== "function") {
+            return [event];
+        }
+
+        const coalescedEvents = event.getCoalescedEvents();
+        return coalescedEvents.length > 0 ? coalescedEvents : [event];
+    }
+
+    function appendPointWithDensification(point: Point, rect: DOMRect) {
+        if (!activeStroke) return;
+
+        if (!lastStrokePoint) {
+            activeStroke.points.push(point);
+            pendingNetworkPoints.push(point);
+            lastStrokePoint = point;
+            return;
+        }
+
+        const from = lastStrokePoint;
+        const to = point;
+
+        const deltaXPx = (to[0] - from[0]) * rect.width;
+        const deltaYPx = (to[1] - from[1]) * rect.height;
+        const distancePx = Math.hypot(deltaXPx, deltaYPx);
+        const steps = Math.max(1, Math.ceil(distancePx / MAX_POINT_GAP_PX));
+
+        for (let step = 1; step <= steps; step++) {
+            const t = step / steps;
+            const interpolatedPoint: Point = [
+                from[0] + (to[0] - from[0]) * t,
+                from[1] + (to[1] - from[1]) * t,
+            ];
+            activeStroke.points.push(interpolatedPoint);
+            pendingNetworkPoints.push(interpolatedPoint);
+        }
+
+        lastStrokePoint = point;
+    }
+
     function handlePointerDown(e: PointerEvent) {
         if (disabled || !gameState.isArtist || gameState.phase !== "drawing") return;
 
@@ -112,34 +178,39 @@
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        const point = toNormalized(x, y);
+        const point = toNormalizedWithRect(x, y, rect);
 
         activeStroke = {
-            points: [point],
+            points: [],
             color,
             width: brushSize,
         };
+
+        pendingNetworkPoints = [];
+        lastStrokePoint = null;
+        appendPointWithDensification(point, rect);
 
         // Render immediately so a single click leaves a visible dot.
         redraw();
 
         socket.emit("stroke:start", { color, width: brushSize });
-        socket.emit("stroke:points", { points: [point] });
+        flushPendingNetworkPoints();
     }
 
     function handlePointerMove(e: PointerEvent) {
         if (!isDrawing || !activeStroke) return;
 
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const point = toNormalized(x, y);
+        const samples = getPointerSamples(e);
+        for (const sample of samples) {
+            const x = sample.clientX - rect.left;
+            const y = sample.clientY - rect.top;
+            const point = toNormalizedWithRect(x, y, rect);
+            appendPointWithDensification(point, rect);
+        }
 
-        activeStroke.points.push(point);
         queueRedraw();
-
-        // Send each sampled point; rendering smoothness is handled on draw.
-        socket.emit("stroke:points", { points: [point] });
+        queueNetworkFlush();
     }
 
     function handlePointerUp(e: PointerEvent) {
@@ -148,9 +219,17 @@
         canvas.releasePointerCapture(e.pointerId);
         isDrawing = false;
 
+        if (networkFlushFrame !== null) {
+            cancelAnimationFrame(networkFlushFrame);
+            networkFlushFrame = null;
+        }
+        flushPendingNetworkPoints();
+
         // Move to completed strokes
         completedStrokes = [...completedStrokes, activeStroke];
         activeStroke = null;
+        pendingNetworkPoints = [];
+        lastStrokePoint = null;
 
         socket.emit("stroke:end");
         redraw();
@@ -193,6 +272,8 @@
         completedStrokes = [];
         activeStroke = null;
         remoteActiveStroke = null;
+        pendingNetworkPoints = [];
+        lastStrokePoint = null;
         clearCanvas();
     }
 

@@ -32,7 +32,7 @@
     }
 </script>
 
-<div class="flex justify-between items-center px-4 py-2">
+<div class="relative flex justify-between items-center px-4 py-2">
     <!-- Left: Timer and Round -->
     <div class="flex items-center gap-4">
         <span class="text-xl font-mono">{roundTime}s</span>
@@ -40,24 +40,26 @@
     </div>
 
     <!-- Center: Word -->
-    <div class="flex items-center gap-1">
-        {#each characters as char, i}
-            {#if char === " "}
-                <span class="w-4"></span>
-            {:else}
-                <span
-                    class="w-4 h-6 flex items-center justify-center font-bold border-b-2 border-base-content"
-                >
-                    {#if isArtist || revealedIndices.has(i)}
-                        {char}
-                    {:else if revealWord}
-                        {char}
-                    {:else}
-                        &nbsp;
-                    {/if}
-                </span>
-            {/if}
-        {/each}
+    <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div class="flex items-center gap-1">
+            {#each characters as char, i}
+                {#if char === " "}
+                    <span class="w-4"></span>
+                {:else}
+                    <span
+                        class="w-4 h-6 flex items-center justify-center font-bold border-b-2 border-base-content"
+                    >
+                        {#if isArtist || revealedIndices.has(i)}
+                            {char}
+                        {:else if revealWord}
+                            {char}
+                        {:else}
+                            &nbsp;
+                        {/if}
+                    </span>
+                {/if}
+            {/each}
+        </div>
     </div>
 
     <!-- Right: Room Code -->

@@ -43,8 +43,14 @@
     </div>
 
     {#if canStart}
-        <div class="pt-2">
+        <div class="pt-2 start-button-row">
             <Button variant="start" onclick={onStart}>Start Game</Button>
         </div>
     {/if}
 </div>
+
+<style>
+    .start-button-row :global(button) {
+        width: 100%;
+    }
+</style>

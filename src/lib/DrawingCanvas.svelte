@@ -14,7 +14,7 @@
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null = null;
     let isDrawing = $state(false);
-    let lastPoint: Point | null = null;
+    let redrawFrame: number | null = null;
 
     // Local stroke state for rendering
     let completedStrokes: Stroke[] = $state([]);
@@ -54,6 +54,9 @@
         }
 
         return () => {
+            if (redrawFrame !== null) {
+                cancelAnimationFrame(redrawFrame);
+            }
             window.removeEventListener("resize", resizeCanvas);
             socket.off("stroke:start", handleRemoteStrokeStart);
             socket.off("stroke:points", handleRemoteStrokePoints);
@@ -91,6 +94,15 @@
         };
     }
 
+    function queueRedraw() {
+        if (redrawFrame !== null) return;
+
+        redrawFrame = requestAnimationFrame(() => {
+            redrawFrame = null;
+            redraw();
+        });
+    }
+
     function handlePointerDown(e: PointerEvent) {
         if (disabled || !gameState.isArtist || gameState.phase !== "drawing") return;
 
@@ -102,7 +114,6 @@
         const y = e.clientY - rect.top;
         const point = toNormalized(x, y);
 
-        lastPoint = point;
         activeStroke = {
             points: [point],
             color,
@@ -117,22 +128,17 @@
     }
 
     function handlePointerMove(e: PointerEvent) {
-        if (!isDrawing || !activeStroke || !ctx) return;
+        if (!isDrawing || !activeStroke) return;
 
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         const point = toNormalized(x, y);
 
-        // Draw line segment
-        if (lastPoint) {
-            drawLineSegment(lastPoint, point, activeStroke.color, activeStroke.width);
-        }
-
         activeStroke.points.push(point);
-        lastPoint = point;
+        queueRedraw();
 
-        // Batch points for network efficiency (send every few points)
+        // Send each sampled point; rendering smoothness is handled on draw.
         socket.emit("stroke:points", { points: [point] });
     }
 
@@ -145,7 +151,6 @@
         // Move to completed strokes
         completedStrokes = [...completedStrokes, activeStroke];
         activeStroke = null;
-        lastPoint = null;
 
         socket.emit("stroke:end");
         redraw();
@@ -172,25 +177,8 @@
         if (data.playerId === gameState.playerId) return;
         if (!remoteActiveStroke) return;
 
-        // Draw new segments
-        for (let i = 0; i < data.points.length; i++) {
-            const newPoint = data.points[i];
-            const prevPoint =
-                i === 0
-                    ? remoteActiveStroke.points[remoteActiveStroke.points.length - 1]
-                    : data.points[i - 1];
-
-            if (prevPoint) {
-                drawLineSegment(
-                    prevPoint,
-                    newPoint,
-                    remoteActiveStroke.color,
-                    remoteActiveStroke.width,
-                );
-            }
-
-            remoteActiveStroke.points.push(newPoint);
-        }
+        remoteActiveStroke.points.push(...data.points);
+        queueRedraw();
     }
 
     function handleRemoteStrokeEnd() {
@@ -215,27 +203,13 @@
     }
 
     // Drawing helpers
-    function drawLineSegment(from: Point, to: Point, strokeColor: string, strokeWidth: number) {
-        if (!ctx) return;
-
-        const fromPixels = toPixels(from);
-        const toPixels_ = toPixels(to);
-
-        ctx.beginPath();
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.moveTo(fromPixels.x, fromPixels.y);
-        ctx.lineTo(toPixels_.x, toPixels_.y);
-        ctx.stroke();
-    }
-
     function drawStroke(stroke: Stroke) {
         if (!ctx || stroke.points.length === 0) return;
 
-        if (stroke.points.length === 1) {
-            const point = toPixels(stroke.points[0]);
+        const points = stroke.points.map((point) => toPixels(point));
+
+        if (points.length === 1) {
+            const point = points[0];
             const radius = Math.max(1, stroke.width / 2);
             ctx.beginPath();
             ctx.fillStyle = stroke.color;
@@ -250,13 +224,27 @@
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
-        const first = toPixels(stroke.points[0]);
+        const first = points[0];
         ctx.moveTo(first.x, first.y);
 
-        for (let i = 1; i < stroke.points.length; i++) {
-            const point = toPixels(stroke.points[i]);
-            ctx.lineTo(point.x, point.y);
+        if (points.length === 2) {
+            const second = points[1];
+            ctx.lineTo(second.x, second.y);
+            ctx.stroke();
+            return;
         }
+
+        for (let i = 1; i < points.length - 1; i++) {
+            const current = points[i];
+            const next = points[i + 1];
+            const midpointX = (current.x + next.x) / 2;
+            const midpointY = (current.y + next.y) / 2;
+            ctx.quadraticCurveTo(current.x, current.y, midpointX, midpointY);
+        }
+
+        const secondLast = points[points.length - 2];
+        const last = points[points.length - 1];
+        ctx.quadraticCurveTo(secondLast.x, secondLast.y, last.x, last.y);
 
         ctx.stroke();
     }

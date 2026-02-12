@@ -74,7 +74,11 @@ interface ServerToClientEvents {
   "round:start": (data: { round: number; artistId: string }) => void;
   "round:end": (data: { word: string; scores: Record<string, number> }) => void;
   "game:end": (data: { finalStandings: FinalStanding[] }) => void;
-  "guess:correct": (data: { playerId: string; username: string }) => void;
+  "guess:correct": (data: {
+    playerId: string;
+    username: string;
+    suppressCorrectGuessSfx: boolean;
+  }) => void;
   "canvas:sync": (data: { completedStrokes: Stroke[]; activeStroke: Stroke | null }) => void;
   "stroke:start": (data: { playerId: string; color: string; width: number }) => void;
   "stroke:points": (data: { playerId: string; points: Point[] }) => void;

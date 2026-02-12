@@ -313,7 +313,7 @@ function createGameState() {
       if (data.playerId === playerId) {
         guessedThisRound = true;
       }
-      if (!isReconnecting && data.playerId === playerId) {
+      if (!isReconnecting && data.playerId === playerId && !data.suppressCorrectGuessSfx) {
         playSfx("correctGuess");
       }
       console.log(`${data.username} guessed correctly!`);

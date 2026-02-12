@@ -6,9 +6,11 @@ import {
   type Guessage,
   type RoomConfig,
 } from "./socket";
+import { playSfx } from "./sfx";
 
 const STORAGE_KEY = "gameSession";
 const PLAYER_ID_KEY = "playerId";
+const ROUND_TIMEOUT_GRACE_MS = 500;
 
 interface StoredSession {
   username: string;
@@ -67,6 +69,42 @@ function getRevealedIndicesFromMask(maskedWord: string): Set<number> {
   return indices;
 }
 
+function playTransitionSound(previousPhase: GamePhase, nextPhase: GamePhase, reconnecting: boolean) {
+  if (reconnecting) return;
+
+  if (previousPhase === "lobby" && nextPhase === "word-selection") {
+    playSfx("gameStart");
+    return;
+  }
+
+  if (previousPhase === "word-selection" && nextPhase === "drawing") {
+    playSfx("drawingStart");
+  }
+}
+
+function didPlayerGuessInRound(room: ConvertedRoom, localPlayerId: string): boolean {
+  return room.drawingState.correctlyGuessed.some((player) => player.playerId === localPlayerId);
+}
+
+function shouldPlayTimeoutMissedSound(
+  room: ConvertedRoom | null,
+  localPlayerId: string,
+  guessedThisRound: boolean
+): boolean {
+  if (!room) return false;
+
+  const isCurrentArtist = room.drawingState.currentArtist === localPlayerId;
+  if (isCurrentArtist) return false;
+
+  if (guessedThisRound) return false;
+
+  const startedAt = room.drawingState.startedAt;
+  if (!startedAt) return false;
+
+  const elapsed = Date.now() - startedAt;
+  return elapsed + ROUND_TIMEOUT_GRACE_MS >= room.config.drawTimer;
+}
+
 function createGameState() {
   // Load stored session
   const storedSession = loadSession();
@@ -93,6 +131,7 @@ function createGameState() {
   let maskedWord = $state<string | null>(null);
   let revealedIndices = $state<Set<number>>(new Set<number>());
   let finalStandings = $state<FinalStanding[]>([]);
+  let guessedThisRound = $state(false);
 
   let timerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -170,6 +209,7 @@ function createGameState() {
     socket.on("disconnect", () => {
       connected = false;
       socketId = null;
+      guessedThisRound = false;
       stopLocalTimer();
       console.log("Socket disconnected");
     });
@@ -180,9 +220,13 @@ function createGameState() {
 
     socket.on("room:update", (updatedRoom) => {
       console.log("Room update received:", updatedRoom);
+      const previousPhase = phase;
       room = updatedRoom;
       phase = updatedRoom.phase;
+      playTransitionSound(previousPhase, updatedRoom.phase, isReconnecting);
       currentRound = updatedRoom.phase === "lobby" ? 0 : updatedRoom.currentRound;
+      guessedThisRound =
+        updatedRoom.phase === "drawing" ? didPlayerGuessInRound(updatedRoom, playerId) : false;
 
       // Clear stale word display when game returns to lobby.
       if (updatedRoom.phase === "lobby") {
@@ -192,6 +236,7 @@ function createGameState() {
         maskedWord = null;
         revealedIndices = new Set<number>();
         wordChoices = [];
+        guessedThisRound = false;
       }
     });
 
@@ -222,8 +267,10 @@ function createGameState() {
     });
 
     socket.on("timer:sync", (data) => {
+      const previousPhase = phase;
       timerRemaining = data.remaining;
       phase = data.phase;
+      playTransitionSound(previousPhase, data.phase, isReconnecting);
       startLocalTimer(data.remaining);
     });
 
@@ -233,15 +280,23 @@ function createGameState() {
       currentWord = null;
       maskedWord = null;
       revealedIndices = new Set<number>();
+      guessedThisRound = false;
     });
 
     socket.on("round:end", (data) => {
+      if (!isReconnecting && shouldPlayTimeoutMissedSound(room, playerId, guessedThisRound)) {
+        playSfx("timeoutMissed");
+      }
       currentWord = data.word;
       maskedWord = null;
       revealedIndices = new Set<number>();
+      guessedThisRound = false;
     });
 
     socket.on("game:end", (data) => {
+      if (!isReconnecting) {
+        playSfx("gameEnd");
+      }
       stopLocalTimer();
       timerRemaining = 0;
       phase = "lobby";
@@ -251,9 +306,16 @@ function createGameState() {
       revealedIndices = new Set<number>();
       wordChoices = [];
       finalStandings = [...data.finalStandings];
+      guessedThisRound = false;
     });
 
     socket.on("guess:correct", (data) => {
+      if (data.playerId === playerId) {
+        guessedThisRound = true;
+      }
+      if (!isReconnecting && data.playerId === playerId) {
+        playSfx("correctGuess");
+      }
       console.log(`${data.username} guessed correctly!`);
     });
   }
@@ -277,6 +339,7 @@ function createGameState() {
     maskedWord = null;
     revealedIndices = new Set<number>();
     wordChoices = [];
+    guessedThisRound = false;
   }
 
   async function setUsernameInternal(name: string): Promise<boolean> {
@@ -330,6 +393,8 @@ function createGameState() {
           room = res.room;
           roomId = res.room.id;
           phase = res.room.phase;
+          guessedThisRound =
+            res.room.phase === "drawing" ? didPlayerGuessInRound(res.room, playerId) : false;
           resolve({ success: true });
         } else {
           console.error("Failed to join room:", res.error);
@@ -352,6 +417,8 @@ function createGameState() {
           room = res.room;
           roomId = res.room.id;
           phase = res.room.phase;
+          guessedThisRound =
+            res.room.phase === "drawing" ? didPlayerGuessInRound(res.room, playerId) : false;
           if (username && roomId) {
             saveSession(username, roomId);
           }
@@ -373,6 +440,9 @@ function createGameState() {
   }
 
   function leaveRoom() {
+    if (roomId) {
+      playSfx("leaveRoom");
+    }
     socket.emit("room:leave");
     room = null;
     roomId = null;
@@ -382,6 +452,7 @@ function createGameState() {
     maskedWord = null;
     revealedIndices = new Set<number>();
     wordChoices = [];
+    guessedThisRound = false;
     stopLocalTimer();
     clearSession();
   }
@@ -430,6 +501,7 @@ function createGameState() {
           currentWord = res.word;
           revealedIndices = new Set<number>();
           wordChoices = [];
+          guessedThisRound = false;
           resolve(true);
         } else {
           console.error("Failed to choose word:", res.error);

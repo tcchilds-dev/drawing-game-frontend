@@ -35,7 +35,7 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-2">
         {#each messages as message (message.timestamp)}
             <div class="chat chat-start">
-                <div class="chat-bubble chat-bubble-neutral">
+                <div class="chat-bubble chat-bubble-neutral text-xs break-words whitespace-normal max-w-full !bg-slate-700">
                     <span class="font-semibold">{getDisplayName(message.playerId)}:</span>
                     {message.guessage}
                 </div>

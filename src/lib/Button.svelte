@@ -20,7 +20,7 @@
 
     const variantClasses: Record<Variant, string> = {
         submit: "btn btn-success join-item",
-        leave: "btn btn-error btn-wide align-bottom",
+        leave: "btn btn-error w-full",
         create: "btn btn-warning",
         join: "btn btn-success",
         start: "btn btn-success",

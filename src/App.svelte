@@ -227,7 +227,7 @@
 
       <!-- Leave button -->
       <div
-        class="col-span-3 glass rounded-bl-lg flex items-center justify-center"
+        class="col-span-3 glass rounded-bl-lg flex items-center justify-center p-2"
       >
         {#if screen === "game"}
           <Button variant="leave" onclick={handleLeave}>Leave</Button>

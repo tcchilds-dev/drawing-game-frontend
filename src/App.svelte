@@ -119,7 +119,7 @@
   <main class="flex-1 px-8 pb-4 min-h-0">
     <div class="grid grid-cols-6 grid-rows-12 h-full gap-1">
       <!-- Top bar -->
-      <div class="col-span-6 row-span-1 bg-base-100 rounded-t-lg">
+      <div class="col-span-6 row-span-1 glass rounded-t-lg">
         {#if screen === "game" && gameState.room}
           <WordDisplay
             word={gameState.displayWord}
@@ -137,7 +137,7 @@
       </div>
 
       <!-- Player list -->
-      <div class="row-span-10 bg-base-200 rounded-bl-lg">
+      <div class="row-span-10 glass rounded-bl-lg">
         {#if screen === "game"}
           <PlayerList
             players={gameState.players}
@@ -153,7 +153,7 @@
       <div class="row-span-10 col-span-4 overflow-hidden">
         {#if screen === "reconnecting"}
           <div
-            class="flex flex-col items-center justify-center h-full gap-4 bg-base-100"
+            class="flex flex-col items-center justify-center h-full gap-4 glass"
           >
             <span class="loading loading-spinner loading-lg"></span>
             <p class="text-lg">Reconnecting to your game...</p>
@@ -178,7 +178,7 @@
             onSelect={handleWordChoice}
           />
         {:else if gameState.finalStandings.length > 0}
-          <div class="flex h-full items-center justify-center bg-base-100 p-6">
+          <div class="flex h-full items-center justify-center glass p-6">
             <div
               class="w-full max-w-lg rounded-lg border border-base-300 bg-base-200 p-6"
             >
@@ -220,7 +220,7 @@
       </div>
 
       <!-- Chat -->
-      <div class="row-span-11 bg-base-200 rounded-r-lg">
+      <div class="row-span-11 glass rounded-r-lg">
         {#if screen === "game"}
           <Chat
             messages={gameState.messages}
@@ -233,7 +233,7 @@
 
       <!-- Leave button -->
       <div
-        class="col-span-1 bg-base-200 rounded-bl-lg flex items-center justify-center"
+        class="col-span-1 glass rounded-bl-lg flex items-center justify-center"
       >
         {#if screen === "game"}
           <Button variant="leave" onclick={handleLeave}>Leave</Button>
@@ -241,7 +241,7 @@
       </div>
 
       <!-- Color picker -->
-      <div class="col-span-4 bg-base-100 flex items-center justify-center">
+      <div class="col-span-4 glass flex items-center justify-center">
         {#if screen === "game" && gameState.isArtist}
           <ColorPicker
             bind:selected={selectedColor}

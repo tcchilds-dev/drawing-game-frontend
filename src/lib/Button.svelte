@@ -19,15 +19,15 @@
     }
 
     const variantClasses: Record<Variant, string> = {
-        submit: "btn btn-soft btn-success join-item",
-        leave: "btn btn-wide align-bottom",
-        create: "btn btn-soft btn-warning",
-        join: "btn btn-soft btn-success",
-        start: "btn btn-soft btn-success",
+        submit: "btn btn-success join-item",
+        leave: "btn btn-error btn-wide align-bottom",
+        create: "btn btn-warning",
+        join: "btn btn-success",
+        start: "btn btn-success",
         upvote: "btn btn-success",
         word: "btn btn-primary",
-        clear: "btn btn-soft",
-        undo: "btn btn-soft",
+        clear: "btn btn-neutral",
+        undo: "btn btn-neutral",
     };
 
     let { variant, children, ...rest }: Props = $props();

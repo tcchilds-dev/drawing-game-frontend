@@ -109,14 +109,8 @@
   const timerSeconds = $derived(Math.ceil(gameState.timerRemaining / 1000));
 </script>
 
-<div class="flex flex-col h-full">
-  <header class="h-20 flex items-center justify-center">
-    <h1 class="text-4xl font-bold text-white drop-shadow-lg">
-      Tom's Drawing Game
-    </h1>
-  </header>
-
-  <main class="flex-1 px-8 pb-4 min-h-0">
+<div class="h-full">
+  <main class="h-full p-6">
     <div class="grid grid-cols-6 grid-rows-12 h-full gap-1">
       <!-- Top bar -->
       <div class="col-span-6 row-span-1 glass rounded-t-lg">
@@ -253,9 +247,4 @@
       </div>
     </div>
   </main>
-
-  <footer class="h-20 flex items-center justify-center gap-8 text-white/70">
-    <a href="https://github.com/tcchilds-dev" class="hover:text-white">GitHub</a
-    >
-  </footer>
 </div>

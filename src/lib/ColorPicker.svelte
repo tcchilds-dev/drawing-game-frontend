@@ -4,25 +4,31 @@
 
   const colors = [
     "#000000",
-    "#8196a4",
+    "#7a7d82",
+    "#ee1a13",
+    "#ff7000",
+    "#ffe300",
+    "#00cb00",
+    "#00ff90",
+    "#00b1ff",
+    "#2824d2",
+    "#a200b9",
+    "#e8469a",
+    "#ffab8d",
+    "#9f5331",
     "#ffffff",
-    "#ffa873",
-    "#b42c18",
-    "#7f0606",
-    "#9654fb",
-    "#fc60b5",
-    "#f33293",
-    "#f30c0c",
-    "#ff9806",
-    "#f7b42d",
-    "#fde06d",
-    "#b6d966",
-    "#3bde2e",
-    "#30a9fe",
-    "#4169e1",
-    "#6495ed",
-    "#b6dcf7",
-    "#87a6c6",
+    "#c0c0c0",
+    "#b51b16",
+    "#ff9b4f",
+    "#f5e782",
+    "#a5fca4",
+    "#a6ffd8",
+    "#9ee2ff",
+    "#3f3bff",
+    "#9705ff",
+    "#fc8bd9",
+    "#cb764e",
+    "#633315",
   ];
 
   interface Props {
@@ -47,7 +53,7 @@
   </div>
 
   <!-- Colors -->
-  <div class="grid grid-cols-10 gap-1 justify-center">
+  <div class="grid grid-cols-[repeat(13,minmax(0,1fr))] gap-1 justify-center">
     {#each colors as color}
       <button
         class="w-6 h-6 rounded border-2 transition-transform hover:scale-110"

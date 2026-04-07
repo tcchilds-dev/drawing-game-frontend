@@ -25,7 +25,7 @@
 
 <div class="flex flex-col h-full p-2">
     <div class="flex-1 overflow-y-auto">
-        <table class="table table-sm">
+        <table class="table table-sm !text-white">
             <tbody>
                 {#each sortedPlayers as player (player.id)}
                     <tr>

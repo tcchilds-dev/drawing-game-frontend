@@ -92,3 +92,8 @@ See `DEPLOYMENT.md` for step-by-step setup.
 - `src/lib/gameState.svelte.ts` - client game/session/socket state
 - `src/lib/DrawingCanvas.svelte` - canvas rendering + drawing sync
 - `src/lib/socket.ts` - typed Socket.IO client and event contracts
+
+## Acknowledgements
+
+- Game ending music by [VibeHorn](https://pixabay.com/users/52836417) from Pixabay
+- Game start sound effect by [SUBMORITY](https://pixabay.com/users/submority-30821389) from Pixabay

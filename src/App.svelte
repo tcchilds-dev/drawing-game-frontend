@@ -111,9 +111,9 @@
 
 <div class="h-full">
   <main class="h-full p-6">
-    <div class="grid grid-cols-6 grid-rows-12 h-full gap-1">
+    <div class="grid grid-cols-[repeat(24,minmax(0,1fr))] grid-rows-12 h-full gap-1">
       <!-- Top bar -->
-      <div class="col-span-6 row-span-1 glass rounded-t-lg">
+      <div class="col-span-[24] row-span-1 glass rounded-t-lg">
         {#if screen === "game" && gameState.room}
           <WordDisplay
             word={gameState.displayWord}
@@ -131,7 +131,7 @@
       </div>
 
       <!-- Player list -->
-      <div class="row-span-10 glass rounded-bl-lg">
+      <div class="row-span-10 col-span-3 glass rounded-bl-lg">
         {#if screen === "game"}
           <PlayerList
             players={gameState.players}
@@ -144,7 +144,7 @@
       </div>
 
       <!-- Canvas / Overlay screens -->
-      <div class="row-span-10 col-span-4 overflow-hidden screen-area">
+      <div class="row-span-10 col-span-[18] overflow-hidden screen-area">
         {#if screen === "reconnecting"}
           <div
             class="flex flex-col items-center justify-center h-full gap-4 glass"
@@ -214,7 +214,7 @@
       </div>
 
       <!-- Chat -->
-      <div class="row-span-11 glass rounded-r-lg">
+      <div class="row-span-11 col-span-3 glass rounded-r-lg">
         {#if screen === "game"}
           <Chat
             messages={gameState.messages}
@@ -227,7 +227,7 @@
 
       <!-- Leave button -->
       <div
-        class="col-span-1 glass rounded-bl-lg flex items-center justify-center"
+        class="col-span-3 glass rounded-bl-lg flex items-center justify-center"
       >
         {#if screen === "game"}
           <Button variant="leave" onclick={handleLeave}>Leave</Button>
@@ -235,7 +235,7 @@
       </div>
 
       <!-- Color picker -->
-      <div class="col-span-4 glass flex items-center justify-center">
+      <div class="col-span-[18] glass flex items-center justify-center">
         {#if screen === "game" && gameState.isArtist}
           <ColorPicker
             bind:selected={selectedColor}

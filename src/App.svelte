@@ -174,7 +174,7 @@
         {:else if gameState.finalStandings.length > 0}
           <div class="flex h-full items-center justify-center glass p-6">
             <div
-              class="w-full max-w-lg rounded-lg border border-base-300 bg-base-200 p-6"
+              class="w-full max-w-lg rounded-lg border border-base-300 bg-base-200 p-6 [&_*:not(button):not(button_*)]:!text-black"
             >
               <h2 class="mb-4 text-center text-2xl font-bold">Game Over</h2>
               <p class="mb-4 text-center text-sm opacity-70">Final Scores</p>

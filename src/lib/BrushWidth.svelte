@@ -14,8 +14,8 @@
     ];
 </script>
 
-<select class="select select-sm w-28" bind:value={size}>
+<select class="select select-sm w-28 !text-black" bind:value={size}>
     {#each sizes as s}
-        <option value={s.value}>{s.label} ({s.value}px)</option>
+        <option value={s.value} class="!text-black">{s.label} ({s.value}px)</option>
     {/each}
 </select>

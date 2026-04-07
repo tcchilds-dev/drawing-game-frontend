@@ -25,7 +25,7 @@
         join: "btn btn-success",
         start: "btn btn-success",
         upvote: "btn btn-success",
-        word: "btn btn-primary",
+        word: "btn btn-primary !text-white",
         clear: "btn btn-neutral",
         undo: "btn btn-neutral",
     };

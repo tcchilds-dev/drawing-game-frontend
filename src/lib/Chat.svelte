@@ -47,7 +47,7 @@
         <div class="flex gap-2">
             <input
                 type="text"
-                class="input input-bordered flex-1"
+                class="input input-bordered flex-1 !text-black"
                 placeholder={disabled ? "You're drawing!" : "Type a guess..."}
                 bind:value={inputValue}
                 onkeydown={handleKeydown}

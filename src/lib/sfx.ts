@@ -16,10 +16,10 @@ type SoundEffectConfig = {
 export const MASTER_SFX_VOLUME = 0.2;
 
 export const SFX_CONFIG: Record<SoundEffectId, SoundEffectConfig> = {
-  gameStart: { src: "/sfx/game-start.mp3", volume: 0.2 },
+  gameStart: { src: "/sfx/game-start.wav", volume: 0.2 },
   drawingStart: { src: "/sfx/drawing-start.mp3", volume: 0.2 },
   timeoutMissed: { src: "/sfx/timeout-missed.mp3", volume: 0.2 },
-  correctGuess: { src: "/sfx/correct-guess.mp3", volume: 0.1 },
+  correctGuess: { src: "/sfx/correct-guess.wav", volume: 0.2 },
   gameEnd: { src: "/sfx/game-end.mp3", volume: 0.2 },
   leaveRoom: { src: "/sfx/leave-room.mp3", volume: 0.1 },
 };

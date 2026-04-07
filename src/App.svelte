@@ -150,7 +150,7 @@
       </div>
 
       <!-- Canvas / Overlay screens -->
-      <div class="row-span-10 col-span-4 overflow-hidden">
+      <div class="row-span-10 col-span-4 overflow-hidden screen-area">
         {#if screen === "reconnecting"}
           <div
             class="flex flex-col items-center justify-center h-full gap-4 glass"

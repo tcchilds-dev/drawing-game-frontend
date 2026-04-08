@@ -34,9 +34,9 @@
 
 <div class="relative flex justify-between items-center px-4 py-2">
   <!-- Left: Timer and Round -->
-  <div class="flex items-center gap-4">
+  <div class="flex items-baseline gap-4">
     <span class="text-xl font-mono">{roundTime}s</span>
-    <span class="text-sm">Round {currentRound}/{totalRounds}</span>
+    <span class="text-xl">Round {currentRound}/{totalRounds}</span>
   </div>
 
   <!-- Center: Word -->
@@ -46,10 +46,10 @@
     <div class="flex items-center gap-1">
       {#each characters as char, i}
         {#if char === " "}
-          <span class="w-4"></span>
+          <span class="w-8"></span>
         {:else}
           <span
-            class="w-4 h-6 flex items-center justify-center font-bold border-b-2 border-base-content"
+            class="w-8 h-12 text-2xl flex items-center justify-center font-bold border-b-2 border-base-content"
           >
             {#if isArtist || revealedIndices.has(i)}
               {char}
